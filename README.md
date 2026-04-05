@@ -1,29 +1,32 @@
 # MikroTik WinBox — AppImage
 
-Packaging du client [WinBox](https://mikrotik.com/software) de MikroTik en AppImage portable pour Linux x86_64.
+Portable [WinBox](https://mikrotik.com/software) AppImage packaging for Linux x86_64.
 
-## Contenu du dépôt
+The AppImage version is automatically detected from the bundled binary and embedded in the filename, desktop entry, and AppStream metadata — making it visible in tools like [Gear Lever](https://github.com/mijorus/gearlever).
+
+## Repository structure
 
 ```
 .
-├── WinBox                  # Exécutable WinBox (ELF 64-bit)
-├── AppRun                  # Point d'entrée de l'AppImage
-├── WinBox.desktop          # Métadonnées de l'application
-├── build-appimage.sh       # Script de build
+├── WinBox                  # WinBox executable (ELF 64-bit)
+├── AppRun                  # AppImage entry point
+├── WinBox.desktop          # Desktop entry (spec v1.0 + X-AppImage-Version)
+├── winbox.appdata.xml      # AppStream metadata (version, release date)
+├── build-appimage.sh       # Build script
 └── assets/
     └── img/
-        └── winbox.png      # Icône de l'application
+        └── winbox.png      # Application icon
 ```
 
-## Prérequis
+## Requirements
 
-- OS Arch-based (CachyOS, Manjaro, EndeavourOS…)
-- `patchelf` installé :
+- Arch-based distro (CachyOS, Manjaro, EndeavourOS…)
+- `patchelf`:
   ```bash
   sudo pacman -S patchelf
   ```
-- `wget` et `ldd` (inclus par défaut sur Arch)
-- Connexion internet (pour télécharger `appimagetool` et `linuxdeploy` au premier build)
+- `wget` and `ldd` (included by default on Arch)
+- Internet access on first build (to download `appimagetool` and `linuxdeploy` into `./tools/`)
 
 ## Build
 
@@ -34,32 +37,38 @@ chmod +x build-appimage.sh
 ./build-appimage.sh
 ```
 
-L'AppImage est générée à la racine du projet :
-
-```
-WinBox-x86_64.AppImage
-```
-
-## Utilisation
+The version is auto-detected from the binary. You can also pass it explicitly:
 
 ```bash
-chmod +x WinBox-x86_64.AppImage
-./WinBox-x86_64.AppImage
+./build-appimage.sh 4.0.1
 ```
 
-Ou double-cliquez dessus dans votre gestionnaire de fichiers (nécessite `libfuse2` ou le support FUSE de votre distro).
+The AppImage is generated at the project root:
 
-> **Note :** Les bibliothèques GPU (`libGL`, `libEGL`, `libvulkan`…) et la glibc ne sont **pas** bundlées — elles viennent de votre système hôte pour assurer la compatibilité avec vos pilotes graphiques.
+```
+WinBox-4.0.1-x86_64.AppImage
+```
 
-## Dépendances runtime bundlées
+## Usage
 
-Le script emballe automatiquement les bibliothèques Qt/X11 suivantes :
+```bash
+chmod +x WinBox-4.0.1-x86_64.AppImage
+./WinBox-4.0.1-x86_64.AppImage
+```
 
-- `libxcb` et ses extensions (xcb-glx, xkb, randr, render…)
+Or double-click it in your file manager (requires `libfuse2` or FUSE support from your distro).
+
+> **Note:** GPU libraries (`libGL`, `libEGL`, `libvulkan`…) and glibc are **not** bundled — they are provided by the host system to ensure compatibility with your graphics drivers.
+
+## Bundled runtime dependencies
+
+The build script automatically copies the following Qt/X11 libraries:
+
+- `libxcb` and its extensions (xcb-glx, xkb, randr, render…)
 - `libxkbcommon`, `libX11`, `libfreetype`, `libfontconfig`
 - `libdbus-1`, `libglib-2.0`, `libharfbuzz`
-- Et toutes leurs dépendances transitives
+- All their transitive dependencies
 
-## Licence
+## License
 
-WinBox est un logiciel propriétaire de [MikroTik](https://mikrotik.com). Ce dépôt ne fournit que le packaging AppImage.
+WinBox is proprietary software by [MikroTik](https://mikrotik.com). This repository only provides the AppImage packaging.

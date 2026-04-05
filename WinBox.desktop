@@ -1,4 +1,5 @@
 [Desktop Entry]
+Version=1.0
 Name=WinBox
 Comment=MikroTik WinBox network configuration tool
 Exec=WinBox
@@ -7,3 +8,4 @@ Type=Application
 Categories=Network;System;
 Terminal=false
 StartupNotify=true
+X-AppImage-Version=__APPVERSION__

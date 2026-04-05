@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.mikrotik.WinBox</id>
+  <name>WinBox</name>
+  <summary>MikroTik WinBox network configuration tool</summary>
+  <description>
+    <p>
+      WinBox is a small utility that allows administration of MikroTik RouterOS
+      using a fast and simple GUI. It connects to a router and retrieves all
+      available menus and sub-menus, extra commands, and user settings.
+    </p>
+  </description>
+  <url type="homepage">https://mikrotik.com/software</url>
+  <categories>
+    <category>Network</category>
+    <category>System</category>
+  </categories>
+  <icon type="local">winbox.png</icon>
+  <releases>
+    <release version="__APPVERSION__" date="__BUILDDATE__"/>
+  </releases>
+  <provides>
+    <binary>WinBox</binary>
+  </provides>
+</component>

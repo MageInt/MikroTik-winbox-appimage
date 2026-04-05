@@ -94,8 +94,16 @@ chmod +x "${APPDIR}/usr/bin/WinBox"
 cp "${SCRIPT_DIR}/assets/img/winbox.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/winbox.png"
 cp "${SCRIPT_DIR}/assets/img/winbox.png" "${APPDIR}/winbox.png"
 
-# Copy and patch desktop file with detected version
-sed "s/^Version=.*/Version=${APP_VERSION}/" "${SCRIPT_DIR}/WinBox.desktop" > "${APPDIR}/WinBox.desktop"
+# Copy and patch desktop file: X-AppImage-Version for Gear Lever + other managers
+BUILD_DATE=$(date +%Y-%m-%d)
+sed "s/__APPVERSION__/${APP_VERSION}/g" "${SCRIPT_DIR}/WinBox.desktop" > "${APPDIR}/WinBox.desktop"
+
+# Copy and patch AppStream metainfo with version and build date
+mkdir -p "${APPDIR}/usr/share/metainfo"
+sed -e "s/__APPVERSION__/${APP_VERSION}/g" \
+    -e "s/__BUILDDATE__/${BUILD_DATE}/g" \
+    "${SCRIPT_DIR}/winbox.appdata.xml" > "${APPDIR}/usr/share/metainfo/com.mikrotik.WinBox.appdata.xml"
+
 cp "${SCRIPT_DIR}/AppRun" "${APPDIR}/AppRun"
 chmod +x "${APPDIR}/AppRun"
 
@@ -159,7 +167,7 @@ patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN/../../lib' "${APPDIR}/usr/bin/WinBo
 # ── 5. Package AppImage ──────────────────────────────────────────────────────
 
 echo "==> Packaging AppImage..."
-ARCH=x86_64 "${APPIMAGETOOL}" --no-appstream "${APPDIR}" "${OUTPUT}"
+ARCH=x86_64 "${APPIMAGETOOL}" "${APPDIR}" "${OUTPUT}"
 
 echo ""
 echo "✓ Done! WinBox ${APP_VERSION} AppImage created at:"
