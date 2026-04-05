@@ -1,0 +1,21 @@
+#!/bin/bash
+# AppRun - Entry point for WinBox AppImage
+
+HERE="$(dirname "$(readlink -f "${0}")")"
+
+export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+export PATH="${HERE}/usr/bin:${PATH}"
+export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+BINARY="${HERE}/usr/bin/WinBox"
+
+if [[ ! -f "$BINARY" ]]; then
+    echo "ERROR: WinBox binary not found at: $BINARY" >&2
+    exit 1
+fi
+
+if [[ ! -x "$BINARY" ]]; then
+    chmod +x "$BINARY"
+fi
+
+exec "$BINARY" "$@"

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=WinBox
+Comment=MikroTik WinBox network configuration tool
+Exec=WinBox
+Icon=winbox
+Type=Application
+Categories=Network;System;
+Terminal=false
+StartupNotify=true
