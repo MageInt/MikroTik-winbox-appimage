@@ -31,7 +31,7 @@ The AppImage version is automatically detected from the bundled binary and embed
 ## Build
 
 ```bash
-git clone https://github.com/<your-username>/MikroTik-winbox-appimage
+git clone https://github.com/MageInt/MikroTik-winbox-appimage
 cd MikroTik-winbox-appimage
 chmod +x build-appimage.sh
 ./build-appimage.sh
