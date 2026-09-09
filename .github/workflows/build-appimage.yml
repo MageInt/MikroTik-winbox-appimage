@@ -1,0 +1,127 @@
+name: Build AppImage
+
+# Builds only on push to main — never on pull requests.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "WinBox version to build (leave empty for the latest one)"
+        required: false
+        type: string
+
+# Needed to create the release and push its tag.
+permissions:
+  contents: write
+
+concurrency:
+  group: build-appimage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # 22.04 on purpose: the bundled Qt/X11 libs link against the runner glibc,
+    # so an older image keeps the AppImage usable on more distros.
+    runs-on: ubuntu-22.04
+
+    env:
+      # appimagetool/linuxdeploy are AppImages and GitHub runners have no FUSE
+      APPIMAGE_EXTRACT_AND_RUN: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            patchelf wget unzip file desktop-file-utils \
+            libxcb1 libxcb-glx0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 \
+            libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xkb1 \
+            libxkbcommon0 libxkbcommon-x11-0 libx11-6 libx11-xcb1 libxau6 \
+            libfontconfig1 libfreetype6 libharfbuzz0b libgraphite2-3 \
+            libdbus-1-3 libglib2.0-0 libpng16-16 libbrotli1 libbz2-1.0 \
+            libexpat1 libpcre2-8-0 libcap2 libsystemd0
+
+      - name: Build AppImage
+        env:
+          WINBOX_VERSION: ${{ inputs.version }}
+        run: |
+          chmod +x build-appimage.sh
+          ./build-appimage.sh --download ${WINBOX_VERSION}
+
+      - name: Collect build info
+        id: info
+        run: |
+          appimage=$(ls -1 WinBox-*-x86_64.AppImage | head -1)
+          version=$(basename "${appimage}" -x86_64.AppImage)
+          version=${version#WinBox-}
+          chmod +x "${appimage}"
+          sha256sum "${appimage}" > "${appimage}.sha256"
+          {
+            echo "path=${appimage}"
+            echo "name=$(basename "${appimage}" .AppImage)"
+            echo "version=${version}"
+            echo "tag=v${version}"
+          } >> "$GITHUB_OUTPUT"
+          ls -lh "${appimage}"
+          cat "${appimage}.sha256"
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.info.outputs.name }}
+          path: |
+            ${{ steps.info.outputs.path }}
+            ${{ steps.info.outputs.path }}.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      # A release is cut once per upstream WinBox version: if the tag is already
+      # there, the push brought packaging changes only and nothing is published.
+      - name: Check for an existing release
+        id: release_check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.info.outputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release $TAG already exists — skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release
+        if: steps.release_check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.info.outputs.tag }}
+          VERSION: ${{ steps.info.outputs.version }}
+          APPIMAGE: ${{ steps.info.outputs.path }}
+        run: |
+          cat > notes.md <<EOF
+          Portable AppImage of **MikroTik WinBox ${VERSION}** for Linux x86_64.
+
+          Built from the official MikroTik archive:
+          <https://download.mikrotik.com/routeros/winbox/${VERSION}/WinBox_Linux.zip>
+
+          \`\`\`bash
+          chmod +x ${APPIMAGE}
+          ./${APPIMAGE}
+          \`\`\`
+
+          Verify the download with \`sha256sum -c ${APPIMAGE}.sha256\`.
+
+          WinBox is proprietary software by [MikroTik](https://mikrotik.com);
+          this repository only provides the AppImage packaging.
+          EOF
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "WinBox ${VERSION}" \
+            --notes-file notes.md \
+            "$APPIMAGE" "${APPIMAGE}.sha256"

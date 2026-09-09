@@ -37,7 +37,8 @@ chmod +x build-appimage.sh
 ./build-appimage.sh
 ```
 
-The version is auto-detected from the binary. You can also pass it explicitly:
+By default the bundled `./WinBox` binary is used and the version is auto-detected
+from it. You can also pass the version explicitly:
 
 ```bash
 ./build-appimage.sh 4.0.1
@@ -48,6 +49,37 @@ The AppImage is generated at the project root:
 ```
 WinBox-4.0.1-x86_64.AppImage
 ```
+
+### Build from the official MikroTik download
+
+`--download` fetches `WinBox_Linux.zip` straight from
+`download.mikrotik.com` (binary **and** icon), so nothing has to be committed to
+the repository. Without an explicit version, the latest one is resolved from
+[`LATEST.4`](https://download.mikrotik.com/routeros/winbox/LATEST.4):
+
+```bash
+./build-appimage.sh --download        # latest version
+./build-appimage.sh --download 4.3    # specific version
+```
+
+Archives are cached in `./downloads/`. Requires `unzip` in addition to the
+dependencies above.
+
+## Continuous integration
+
+[`.github/workflows/build-appimage.yml`](.github/workflows/build-appimage.yml)
+builds the AppImage on every push to `main` (never on pull requests) and on
+manual dispatch, where an optional WinBox version can be given. It runs
+`./build-appimage.sh --download` on `ubuntu-22.04`, then:
+
+- uploads `WinBox-<version>-x86_64.AppImage` and its `.sha256` as a workflow
+  artifact (kept 90 days);
+- publishes a GitHub release tagged `v<version>` with both files attached.
+
+The release is cut **once per upstream WinBox version**: if the tag already
+exists, the run only refreshes the artifact. A new MikroTik release therefore
+produces a new GitHub release on the next push to `main` — or immediately by
+triggering the workflow manually from the Actions tab.
 
 ## Usage
 

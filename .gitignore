@@ -1,3 +1,5 @@
 
 /WinBox.AppDir
 *.AppImage
+/tools
+/downloads
